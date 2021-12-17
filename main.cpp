@@ -25,6 +25,7 @@ char * const child_args[] = {
 int child_main(void *arg)
 {
     char c;
+
     // init sync primitive
     close(checkpoint[1]);
 
@@ -39,17 +40,17 @@ int child_main(void *arg)
     read(checkpoint[0], &c, 1);
 
     // setup network
-    system("ip link set dev eth0 up");
-    system("ip link veth1 up");
+    system("ip link set lo up");
+    system("ip link set veth1 up");
     system("ip addr add 169.254.1.2/30 dev veth1");
 
     execv(child_args[0], child_args);
     printf("0oooops\n");
-    return -1;
+    return 1;
 
 }
 
-int main(int, char**) {
+int main(int argc, char** argv) {
 
     // init sync primitive
     pipe(checkpoint);
@@ -57,7 +58,7 @@ int main(int, char**) {
     printf(" - [%5d] Hello ? \n", getpid());
 
     int child_pid = clone(child_main, child_stack + STACK_SIZE,
-                          CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | CLONE_NEWNET | SIGCHLD, NULL);
+                          CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWPID | CLONE_NEWNS | CLONE_NEWNET | SIGCHLD, NULL);
     // further init: create a veth pair
     char* cmd;
 
